@@ -1,0 +1,52 @@
+name: Deploy React App to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # Der Workflow wird bei jedem Push zum Main-Branch ausgeführt
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Schritt 1: Checkout des Repositories
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # Schritt 2: Node.js einrichten
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      # Schritt 3: Erstelle die React App, falls noch nicht vorhanden
+      - name: Create React App
+        run: |
+          npx create-react-app mein-react-app
+          cd mein-react-app
+          npm install gh-pages --save-dev
+
+      # Schritt 4: Bearbeite die package.json, um GitHub Pages zu konfigurieren
+      - name: Modify package.json
+        run: |
+          cd mein-react-app
+          sed -i 's/"name": "mein-react-app"/"name": "mein-react-app", "homepage": "https:\/\/devopsenqineer.github.io\/mein-react-app"/' package.json
+          sed -i 's/"scripts": {/&\n    "predeploy": "npm run build",\n    "deploy": "gh-pages -d build",/' package.json
+
+      # Schritt 5: Installiere die Abhängigkeiten und baue die App
+      - name: Install dependencies and build
+        run: |
+          cd mein-react-app
+          npm install
+          npm run build
+
+      # Schritt 6: Deploy zu GitHub Pages
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages  # GitHub Pages Branch
+          folder: mein-react-app/build  # Ordner mit den gebauten Dateien
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
